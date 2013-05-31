@@ -39,6 +39,7 @@
   tourbus.defaults =
     debug: false
     autoDepart: false
+    ignoreMissing: false
     target: 'body'
     startAt: 0
     onDepart: -> null
@@ -143,22 +144,26 @@
       $.map(
         @$el.find('li')
         ( legEl, i ) =>
-          $legEl = $(legEl)
-          data = $legEl.data()
+          try
+            $legEl = $(legEl)
+            data = $legEl.data()
 
-          leg = new Leg(
-            content: $legEl.html()
-            target: data.el || 'body'
-            bus: @
-            index: i
-            rawData: data
-          )
+            leg = new Leg(
+              content: $legEl.html()
+              target: data.el || 'body'
+              bus: @
+              index: i
+              rawData: data
+            )
 
-          leg.render()
-          @$target.append leg.$el
-          leg._position()
-          leg.hide()
-          leg
+            leg.render()
+            @$target.append leg.$el
+            leg._position()
+            leg.hide()
+            leg
+          catch error
+            @totalLegs--
+            throw error unless @options.ignoreMissing
       )
 
     _log: ->
@@ -185,6 +190,9 @@
 
       if @$target.length == 0
         throw "#{@$target.selector} is not an element!"
+
+      if !@$target.is(':visible')
+        throw "#{@$target.selector} is not visible!"
 
       @_setupOptions()
 
@@ -360,13 +368,24 @@
     return possiblyFalsy
 
   _include = ( value, array ) ->
-    (array||[]).indexOf( value ) != -1
+    $.inArray( value, array || [] ) != -1
 
   _addRule = (( styleTag ) ->
-    sheet = document.head.appendChild(styleTag).sheet
+    styleTag.type = 'text/css'
+    document.getElementsByTagName('head')[0].appendChild( styleTag )
+    sheet = document.styleSheets[document.styleSheets.length - 1]
+
     return ( selector, css ) ->
-      propText = $.map( Object.keys(css), ( p ) -> "#{p}:#{css[p]}" ).join(';')
-      sheet.insertRule( "#{selector} { #{propText} }", sheet.cssRules.length )
+      propText = $.map( (key for key of css),
+                        ( p ) -> "#{p}:#{css[p]}" ).join(';')
+      try
+        if sheet.insertRule
+          sheet.insertRule( "#{selector} { #{propText} }",
+                            (sheet.cssRules || sheet.rules).length )
+        else
+          sheet.addRule( selector, propText )
+
+      return
   )( document.createElement('style') )
 
 )( jQuery )
