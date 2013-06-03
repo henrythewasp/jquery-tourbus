@@ -79,6 +79,7 @@
     # start and end the entire tour, resetting to the beginning
     depart: ->
       @running = true
+      @totalLegs = @$el.find('li').length
       @options.onDepart( @ )
       @_log 'departing', @
       @legs = @_buildLegs()

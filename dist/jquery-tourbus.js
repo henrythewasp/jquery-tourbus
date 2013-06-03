@@ -126,6 +126,7 @@
 
       Bus.prototype.depart = function() {
         this.running = true;
+        this.totalLegs = this.$el.find('li').length;
         this.options.onDepart(this);
         this._log('departing', this);
         this.legs = this._buildLegs();
