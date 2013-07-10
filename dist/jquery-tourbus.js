@@ -116,7 +116,7 @@
         this.options = options;
         this.currentLegIndex = null;
         this.legs = null;
-        this.totalLegs = this.$el.find('li').length;
+        this.totalLegs = this.$el.children('li').length;
         this._setupEvents();
         if (this.options.autoDepart) {
           this.$el.trigger('depart.tourbus');
@@ -126,7 +126,7 @@
 
       Bus.prototype.depart = function() {
         this.running = true;
-        this.totalLegs = this.$el.find('li').length;
+        this.totalLegs = this.$el.children('li').length;
         this.options.onDepart(this);
         this._log('departing', this);
         this.legs = this._buildLegs();
@@ -230,7 +230,7 @@
             return leg.destroy();
           });
         }
-        return $.map(this.$el.find('li'), function(legEl, i) {
+        return $.map(this.$el.children('li'), function(legEl, i) {
           var $legEl, data, error, leg;
 
           try {
