@@ -40,6 +40,7 @@
     debug: false
     autoDepart: false
     ignoreMissing: false
+    preCalcLegPositions: true  # Pre-calc all positions up-front, for speeeeeed
     target: 'body'
     startAt: 0
     onDepart: -> null
@@ -106,6 +107,7 @@
       leg = @legs[index]
       @_log 'showLeg:', leg
       preventDefault = @options.onLegStart( leg, @ )
+      leg.reposition() unless @options.preCalcLegPositions
       leg.show() if preventDefault != false
     hideLeg: ( index ) ->
       index ?= @currentLegIndex
@@ -116,7 +118,10 @@
 
     # refresh on-screen positions of all legs (can be used after window resize)
     repositionLegs: ->
-      $.each( @legs, -> this.reposition() ) if @legs
+      if @options.preCalcLegPositions
+        $.each( @legs, -> this.reposition() ) if @legs
+      else
+        @legs[@currentLegIndex].reposition() if @legs and @currentLegIndex != null
 
     # convenience to proceed to next/previous leg or end tour
     # when we're out of legs
@@ -159,7 +164,7 @@
 
             leg.render()
             @$target.append leg.$el
-            leg._position()
+            leg._position() if @options.preCalcLegPositions
             leg.hide()
             leg
           catch error
@@ -189,6 +194,12 @@
       @options = options
       @$target = $(options.target)
 
+      @targetOffset =
+        top: 0
+        left: 0
+      @targetWidth = 0
+      @targetHeight = 0
+
       if @$target.length == 0
         throw "#{@$target.selector} is not an element!"
 
@@ -198,7 +209,7 @@
       @_setupOptions()
 
       @_configureElement()
-      @_configureTarget()
+      @_configureTarget() if @bus.options.preCalcLegPositions
       @_configureScroll()
 
       @_setupEvents()
@@ -221,8 +232,7 @@
       @_teardownEvents()
 
     reposition: ->
-      @_configureTarget()
-      @_position()
+      @_position() if @_configureTarget()
 
     _position: ->
       # position arrow
@@ -282,12 +292,21 @@
       @$el.off 'click'
 
     _configureTarget: ->
-      @targetOffset = @$target.offset()
-      @targetOffset.top = @options.top if _dataProp( @options.top, false )
-      @targetOffset.left = @options.left if _dataProp( @options.left, false )
+      setPos = false
+  
+      tOffset = @$target.offset()
+      tOffset.top = @options.top if _dataProp( @options.top, false )
+      tOffset.left = @options.left if _dataProp( @options.left, false )
+      tWidth = @$target.outerWidth()
+      tHeight = @$target.outerHeight()
 
-      @targetWidth = @$target.outerWidth()
-      @targetHeight = @$target.outerHeight()
+      if @targetOffset.top != tOffset.top or @targetOffset.left != tOffset.left or @targetWidth != tWidth or @targetHeight != tHeight
+        @targetOffset = tOffset
+        @targetWidth  = tWidth
+        @targetHeight = tHeight
+        setPos = true
+
+      return setPos
 
     _configureScroll: ->
       @willScroll = $.fn.scrollTo && @options.scrollTo != false

@@ -75,6 +75,7 @@
       debug: false,
       autoDepart: false,
       ignoreMissing: false,
+      preCalcLegPositions: true,
       target: 'body',
       startAt: 0,
       onDepart: function() {
@@ -166,6 +167,9 @@
         leg = this.legs[index];
         this._log('showLeg:', leg);
         preventDefault = this.options.onLegStart(leg, this);
+        if (!this.options.preCalcLegPositions) {
+          leg.reposition();
+        }
         if (preventDefault !== false) {
           return leg.show();
         }
@@ -186,10 +190,16 @@
       };
 
       Bus.prototype.repositionLegs = function() {
-        if (this.legs) {
-          return $.each(this.legs, function() {
-            return this.reposition();
-          });
+        if (this.options.preCalcLegPositions) {
+          if (this.legs) {
+            return $.each(this.legs, function() {
+              return this.reposition();
+            });
+          }
+        } else {
+          if (this.legs && this.currentLegIndex !== null) {
+            return this.legs[this.currentLegIndex].reposition();
+          }
         }
       };
 
@@ -245,7 +255,9 @@
             });
             leg.render();
             _this.$target.append(leg.$el);
-            leg._position();
+            if (_this.options.preCalcLegPositions) {
+              leg._position();
+            }
             leg.hide();
             return leg;
           } catch (_error) {
@@ -287,6 +299,12 @@
         this.index = options.index;
         this.options = options;
         this.$target = $(options.target);
+        this.targetOffset = {
+          top: 0,
+          left: 0
+        };
+        this.targetWidth = 0;
+        this.targetHeight = 0;
         if (this.$target.length === 0) {
           throw "" + this.$target.selector + " is not an element!";
         }
@@ -295,7 +313,9 @@
         }
         this._setupOptions();
         this._configureElement();
-        this._configureTarget();
+        if (this.bus.options.preCalcLegPositions) {
+          this._configureTarget();
+        }
         this._configureScroll();
         this._setupEvents();
         this.bus._log("leg " + this.index + " made with options", this.options);
@@ -319,8 +339,9 @@
       };
 
       Leg.prototype.reposition = function() {
-        this._configureTarget();
-        return this._position();
+        if (this._configureTarget()) {
+          return this._position();
+        }
       };
 
       Leg.prototype._position = function() {
@@ -420,15 +441,25 @@
       };
 
       Leg.prototype._configureTarget = function() {
-        this.targetOffset = this.$target.offset();
+        var setPos, tHeight, tOffset, tWidth;
+
+        setPos = false;
+        tOffset = this.$target.offset();
         if (_dataProp(this.options.top, false)) {
-          this.targetOffset.top = this.options.top;
+          tOffset.top = this.options.top;
         }
         if (_dataProp(this.options.left, false)) {
-          this.targetOffset.left = this.options.left;
+          tOffset.left = this.options.left;
         }
-        this.targetWidth = this.$target.outerWidth();
-        return this.targetHeight = this.$target.outerHeight();
+        tWidth = this.$target.outerWidth();
+        tHeight = this.$target.outerHeight();
+        if (this.targetOffset.top !== tOffset.top || this.targetOffset.left !== tOffset.left || this.targetWidth !== tWidth || this.targetHeight !== tHeight) {
+          this.targetOffset = tOffset;
+          this.targetWidth = tWidth;
+          this.targetHeight = tHeight;
+          setPos = true;
+        }
+        return setPos;
       };
 
       Leg.prototype._configureScroll = function() {
