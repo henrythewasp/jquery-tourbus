@@ -369,6 +369,9 @@
       };
 
       Leg.prototype.show = function() {
+        this.$el.attr({
+          'aria-hidden': false
+        });
         this.$el.css({
           visibility: 'visible',
           opacity: 1.0,
@@ -385,6 +388,9 @@
             zIndex: 0
           });
         } else {
+          this.$el.attr({
+            'aria-hidden': true
+          });
           return this.$el.css({
             visibility: 'hidden'
           });
@@ -399,7 +405,8 @@
         }
         scrollTarget = _dataProp(this.options.scrollTo, this.$el);
         this.bus._log('scrolling to', scrollTarget, this.scrollSettings);
-        return $.scrollTo(scrollTarget, this.scrollSettings);
+        $.scrollTo(scrollTarget, this.scrollSettings);
+        return this.$el.focus();
       };
 
       Leg.prototype._setupOptions = function() {

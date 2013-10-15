@@ -250,12 +250,15 @@
       @$el.css css
 
     show: ->
+      @$el.attr( 'aria-hidden': false )
       @$el.css visibility: 'visible', opacity: 1.0, zIndex: 9999
       @scrollIntoView()
+
     hide: ->
       if @bus.options.debug
         @$el.css visibility: 'visible', opacity: 0.4, zIndex: 0
       else
+        @$el.attr( 'aria-hidden': true )
         @$el.css visibility: 'hidden'
 
     scrollIntoView: ->
@@ -263,6 +266,7 @@
       scrollTarget = _dataProp( @options.scrollTo, @$el )
       @bus._log 'scrolling to', scrollTarget, @scrollSettings
       $.scrollTo( scrollTarget, @scrollSettings )
+      @$el.focus()
 
     _setupOptions: ->
       globalOptions = @bus.options.leg
