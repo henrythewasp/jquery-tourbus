@@ -97,6 +97,8 @@
         orientation: 'bottom',
         align: 'left',
         width: 'auto',
+        minWidth: 'none',
+        maxWidth: 'none',
         margin: 10,
         top: null,
         left: null,
@@ -322,14 +324,29 @@
       }
 
       Leg.prototype.render = function() {
-        var arrowClass, html;
+        var arrowClass, cssOpts, html;
 
         arrowClass = this.options.orientation === 'centered' ? '' : 'tourbus-arrow';
         this.$el.addClass(" " + arrowClass + " tourbus-arrow-" + this.options.orientation + " ");
         html = "<div class='tourbus-leg-inner'>\n  " + this.content + "\n</div>";
-        this.$el.css({
-          width: this.options.width
-        }).html(html);
+        if (typeof document.body.style.maxWidth !== 'undefined') {
+          cssOpts = {
+            width: this.options.width,
+            'min-width': this.options.minWidth,
+            'max-width': this.options.maxWidth
+          };
+        } else {
+          if (this.options.maxWidth !== 'none') {
+            cssOpts = {
+              width: this.options.maxWidth
+            };
+          } else {
+            cssOpts = {
+              width: this.options.width
+            };
+          }
+        }
+        this.$el.css(cssOpts).html(html);
         return this;
       };
 
@@ -422,6 +439,8 @@
         this.options.arrow = this.rawData.arrow || globalOptions.arrow;
         this.options.align = this.rawData.align || globalOptions.align;
         this.options.width = this.rawData.width || globalOptions.width;
+        this.options.minWidth = this.rawData.minWidth || globalOptions.minWidth;
+        this.options.maxWidth = this.rawData.maxWidth || globalOptions.maxWidth;
         return this.options.orientation = this.rawData.orientation || globalOptions.orientation;
       };
 

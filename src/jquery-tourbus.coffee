@@ -54,6 +54,8 @@
       orientation: 'bottom'
       align: 'left'
       width: 'auto'
+      minWidth: 'none'
+      maxWidth: 'none'
       margin: 10
       top: null
       left: null
@@ -224,7 +226,21 @@
           #{@content}
         </div>
       """
-      @$el.css( width: @options.width ).html( html )
+      if typeof(document.body.style.maxWidth) != 'undefined'
+        cssOpts =
+          width: @options.width
+          'min-width': @options.minWidth
+          'max-width': @options.maxWidth
+
+      else
+        if @options.maxWidth != 'none'
+          cssOpts =
+            width: @options.maxWidth
+        else
+          cssOpts =
+            width: @options.width
+
+      @$el.css( cssOpts ).html( html )
       return @
 
     destroy: ->
@@ -279,6 +295,8 @@
       @options.arrow = @rawData.arrow || globalOptions.arrow
       @options.align = @rawData.align || globalOptions.align
       @options.width = @rawData.width || globalOptions.width
+      @options.minWidth = @rawData.minWidth || globalOptions.minWidth
+      @options.maxWidth = @rawData.maxWidth || globalOptions.maxWidth
       @options.orientation = @rawData.orientation || globalOptions.orientation
 
     _configureElement: ->
